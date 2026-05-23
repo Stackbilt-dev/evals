@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.jsonl
+!datasets/public/*.jsonl
+.env
+.dev.vars
