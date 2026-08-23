@@ -148,6 +148,9 @@ const artifact = await createEvaluationReceiptFromNativeReport(
 );
 ```
 
+Latency percentiles are optional in a receipt projection. Omit measurements the native
+framework did not collect; do not use zero as a stand-in for unknown evidence.
+
 The artifact contains aggregate metrics and content digests, not raw prompts, expected
 outputs, or failure transcripts. Its SHA-256 digest can also be placed in a signed Trust
 Bundle as `eval:<name>`, allowing the same eval evidence to be independently verified and

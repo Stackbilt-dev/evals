@@ -13,13 +13,23 @@ export const EvaluationGateSchema = z.object({
   reasons: z.array(z.string().min(1)).default([]),
 });
 
+/**
+ * Public aggregate shared across eval frameworks. Latency percentiles are
+ * optional because a producer must omit measurements it did not collect.
+ */
+export const EvaluationReceiptSummarySchema = EvalRunReportSchema.shape.summary.extend({
+  p50_latency_ms: z.number().nonnegative().optional(),
+  p90_latency_ms: z.number().nonnegative().optional(),
+  p95_latency_ms: z.number().nonnegative().optional(),
+});
+
 /** Public projection required to bind a framework-native private report. */
 export const EvaluationReportBindingSchema = z.object({
   runId: z.string().uuid(),
   runner: z.string().min(1),
   startedAt: z.string().datetime(),
   finishedAt: z.string().datetime(),
-  summary: EvalRunReportSchema.shape.summary,
+  summary: EvaluationReceiptSummarySchema,
 });
 
 export const EvaluationReceiptSchema = z.object({
@@ -42,7 +52,7 @@ export const EvaluationReceiptSchema = z.object({
     digest: DigestSchema,
     started_at: z.string().datetime(),
     finished_at: z.string().datetime(),
-    summary: EvalRunReportSchema.shape.summary,
+    summary: EvaluationReceiptSummarySchema,
   }),
   runner: z.string().min(1),
   gate: EvaluationGateSchema,
@@ -59,6 +69,7 @@ export const EvaluationReceiptArtifactSchema = z.object({
 });
 
 export type EvaluationGate = z.infer<typeof EvaluationGateSchema>;
+export type EvaluationReceiptSummary = z.infer<typeof EvaluationReceiptSummarySchema>;
 export type EvaluationReportBinding = z.infer<typeof EvaluationReportBindingSchema>;
 export type EvaluationReceipt = z.infer<typeof EvaluationReceiptSchema>;
 export type EvaluationReceiptArtifact = z.infer<typeof EvaluationReceiptArtifactSchema>;

@@ -1,6 +1,6 @@
 {
   "name": "@stackbilt/evals",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Edge-native evaluation framework for AI agents and classifiers. Zero runtime dependencies beyond Zod.",
   "type": "module",
   "main": "./dist/index.js",

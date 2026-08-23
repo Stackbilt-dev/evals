@@ -98,6 +98,24 @@ describe('evaluation receipts', () => {
     expect(changed.receipt.report.digest).not.toBe(artifact.receipt.report.digest);
   });
 
+  it('omits latency rather than fabricating unmeasured percentiles', async () => {
+    const { p50_latency_ms, p90_latency_ms, p95_latency_ms, ...summaryWithoutLatency } = report().summary;
+    const artifact = await createEvaluationReceiptFromNativeReport(
+      { framework: 'native', result: 'pass' },
+      {
+        runId: report().run_id,
+        runner: 'native-framework@1.0.0',
+        startedAt: report().started_at,
+        finishedAt: report().finished_at,
+        summary: summaryWithoutLatency,
+      },
+      options,
+    );
+
+    expect(artifact.receipt.report.summary).not.toHaveProperty('p50_latency_ms');
+    expect(p50_latency_ms + p90_latency_ms + p95_latency_ms).toBeGreaterThan(0);
+  });
+
   it('keeps the deployment gate explicit rather than deriving it from pass rate', async () => {
     const blocked = await createEvaluationReceipt(report(), {
       ...options,
