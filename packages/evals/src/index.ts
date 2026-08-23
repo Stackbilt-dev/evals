@@ -20,6 +20,7 @@ export {
 export {
   DigestSchema,
   EvaluationGateSchema,
+  EvaluationReceiptSummarySchema,
   EvaluationReportBindingSchema,
   EvaluationReceiptSchema,
   EvaluationReceiptArtifactSchema,
@@ -32,6 +33,7 @@ export {
 } from './receipt.js';
 export type {
   EvaluationGate,
+  EvaluationReceiptSummary,
   EvaluationReportBinding,
   EvaluationReceipt,
   EvaluationReceiptArtifact,
