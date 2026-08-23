@@ -13,6 +13,15 @@ export const EvaluationGateSchema = z.object({
   reasons: z.array(z.string().min(1)).default([]),
 });
 
+/** Public projection required to bind a framework-native private report. */
+export const EvaluationReportBindingSchema = z.object({
+  runId: z.string().uuid(),
+  runner: z.string().min(1),
+  startedAt: z.string().datetime(),
+  finishedAt: z.string().datetime(),
+  summary: EvalRunReportSchema.shape.summary,
+});
+
 export const EvaluationReceiptSchema = z.object({
   schema_version: z.literal('evaluation-receipt.v1'),
   receipt_id: z.string().uuid(),
@@ -50,6 +59,7 @@ export const EvaluationReceiptArtifactSchema = z.object({
 });
 
 export type EvaluationGate = z.infer<typeof EvaluationGateSchema>;
+export type EvaluationReportBinding = z.infer<typeof EvaluationReportBindingSchema>;
 export type EvaluationReceipt = z.infer<typeof EvaluationReceiptSchema>;
 export type EvaluationReceiptArtifact = z.infer<typeof EvaluationReceiptArtifactSchema>;
 
@@ -107,7 +117,27 @@ export async function createEvaluationReceipt(
   options: CreateEvaluationReceiptOptions,
 ): Promise<EvaluationReceiptArtifact> {
   const report = EvalRunReportSchema.parse(rawReport);
-  const reportDigest = await sha256Canonical(report);
+
+  return createEvaluationReceiptFromNativeReport(report, {
+    runId: report.run_id,
+    runner: report.runner,
+    startedAt: report.started_at,
+    finishedAt: report.finished_at,
+    summary: report.summary,
+  }, options);
+}
+
+/**
+ * Bind a framework-native private report to the standard public receipt shape.
+ * The native report is hashed as-is and is never copied into the receipt.
+ */
+export async function createEvaluationReceiptFromNativeReport(
+  rawReport: unknown,
+  publicBinding: EvaluationReportBinding,
+  options: CreateEvaluationReceiptOptions,
+): Promise<EvaluationReceiptArtifact> {
+  const binding = EvaluationReportBindingSchema.parse(publicBinding);
+  const reportDigest = await sha256Canonical(rawReport);
 
   const receipt = EvaluationReceiptSchema.parse({
     schema_version: 'evaluation-receipt.v1',
@@ -125,13 +155,13 @@ export async function createEvaluationReceipt(
       artifact_digest: options.subject.artifactDigest,
     },
     report: {
-      run_id: report.run_id,
+      run_id: binding.runId,
       digest: reportDigest,
-      started_at: report.started_at,
-      finished_at: report.finished_at,
-      summary: report.summary,
+      started_at: binding.startedAt,
+      finished_at: binding.finishedAt,
+      summary: binding.summary,
     },
-    runner: report.runner,
+    runner: binding.runner,
     gate: options.gate,
     evidence_refs: options.evidenceRefs,
   });

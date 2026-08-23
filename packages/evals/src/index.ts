@@ -20,16 +20,19 @@ export {
 export {
   DigestSchema,
   EvaluationGateSchema,
+  EvaluationReportBindingSchema,
   EvaluationReceiptSchema,
   EvaluationReceiptArtifactSchema,
   canonicalStringify,
   sha256Canonical,
   createEvaluationReceipt,
+  createEvaluationReceiptFromNativeReport,
   verifyEvaluationReceiptArtifact,
   toEvaluationAuditEvent,
 } from './receipt.js';
 export type {
   EvaluationGate,
+  EvaluationReportBinding,
   EvaluationReceipt,
   EvaluationReceiptArtifact,
   CreateEvaluationReceiptOptions,
