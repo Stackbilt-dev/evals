@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canonicalStringify,
   createEvaluationReceipt,
+  createEvaluationReceiptFromNativeReport,
   sha256Canonical,
   toEvaluationAuditEvent,
   verifyEvaluationReceiptArtifact,
@@ -63,6 +64,38 @@ describe('evaluation receipts', () => {
     tampered.receipt.gate.decision = 'block';
 
     expect(await verifyEvaluationReceiptArtifact(tampered)).toBe(false);
+  });
+
+  it('binds a framework-native report without publishing its private fields', async () => {
+    const nativeReport = {
+      evalName: 'intent-classify',
+      timestamp: '2026-08-23T12:00:00.000Z',
+      scores: [{ caseId: 'private-case', transcript: 'do not publish' }],
+    };
+    const artifact = await createEvaluationReceiptFromNativeReport(nativeReport, {
+      runId: report().run_id,
+      runner: 'tarotscript@1.0.0',
+      startedAt: report().started_at,
+      finishedAt: report().finished_at,
+      summary: report().summary,
+    }, options);
+
+    expect(artifact.receipt.report.digest).toBe(await sha256Canonical(nativeReport));
+    expect(JSON.stringify(artifact)).not.toContain('private-case');
+    expect(JSON.stringify(artifact)).not.toContain('do not publish');
+
+    const changed = await createEvaluationReceiptFromNativeReport(
+      { ...nativeReport, timestamp: '2026-08-23T12:00:03.000Z' },
+      {
+        runId: report().run_id,
+        runner: 'tarotscript@1.0.0',
+        startedAt: report().started_at,
+        finishedAt: report().finished_at,
+        summary: report().summary,
+      },
+      options,
+    );
+    expect(changed.receipt.report.digest).not.toBe(artifact.receipt.report.digest);
   });
 
   it('keeps the deployment gate explicit rather than deriving it from pass rate', async () => {

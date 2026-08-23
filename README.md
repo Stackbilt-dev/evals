@@ -131,6 +131,23 @@ const event = toEvaluationAuditEvent(artifact, {
 });
 ```
 
+Frameworks with their own report contract can bind that native report without translating
+or exposing its private fields:
+
+```typescript
+const artifact = await createEvaluationReceiptFromNativeReport(
+  nativeReport,
+  {
+    runId,
+    runner: 'my-agent-framework@2.0.0',
+    startedAt,
+    finishedAt,
+    summary: publicAggregate,
+  },
+  receiptOptions,
+);
+```
+
 The artifact contains aggregate metrics and content digests, not raw prompts, expected
 outputs, or failure transcripts. Its SHA-256 digest can also be placed in a signed Trust
 Bundle as `eval:<name>`, allowing the same eval evidence to be independently verified and
