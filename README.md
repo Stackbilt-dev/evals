@@ -93,6 +93,53 @@ console.log(report.summary.pass_rate);
 console.log(report.summary.metrics?.shopping_coverage?.avg);
 ```
 
+## Evaluation receipts
+
+An eval result and permission to deploy are different decisions. `EvaluationReceipt v1`
+binds a private run report to a public-safe aggregate, the evaluated subject, the dataset
+and rubric digests, and an explicit policy gate.
+
+```typescript
+import {
+  createEvaluationReceipt,
+  sha256Canonical,
+  toEvaluationAuditEvent,
+} from '@stackbilt/evals';
+
+const artifact = await createEvaluationReceipt(report, {
+  evaluation: {
+    name: 'classify-cast',
+    version: '1.0.0',
+    datasetDigest: await sha256Canonical(privateCases),
+    rubricDigest: await sha256Canonical(privateRubric),
+  },
+  subject: {
+    name: 'tarotscript/classify-cast',
+    version: '1.42.0',
+  },
+  gate: {
+    decision: 'allow',
+    policy: 'no-regressions',
+    reasons: ['all required cases passed'],
+  },
+});
+
+// Shape-compatible with @stackbilt/audit-chain writeRecord().
+const event = toEvaluationAuditEvent(artifact, {
+  namespace: 'evaluation:classify-cast',
+  actor: 'ci:tarotscript',
+});
+```
+
+The artifact contains aggregate metrics and content digests, not raw prompts, expected
+outputs, or failure transcripts. Its SHA-256 digest can also be placed in a signed Trust
+Bundle as `eval:<name>`, allowing the same eval evidence to be independently verified and
+bound to a buyer-facing receipt.
+
+The gate is mandatory and is never inferred from accuracy. A run can pass every case and
+still be blocked because human approval, provenance, cost, or another policy condition is
+missing.
+
 ## OSS/private boundary
 
 This repository carries generic eval primitives, runner behavior, public schemas,
